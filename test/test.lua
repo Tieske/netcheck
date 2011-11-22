@@ -1,9 +1,5 @@
-require("socket")
-require("copastimer")
-require("netcheck")
-
-host = "localhost"
-port = 50000
+local socket = require("socket")
+local netcheck = require("netcheck")
 
 -- function handling network changes
 local netchange = function (newState, oldState)
@@ -18,35 +14,24 @@ local netchange = function (newState, oldState)
     -- do some stuff
 end
 
--- function for socket handling
-function handle(skt)
-  skt = copas.wrap(skt)
-  reqdata = skt:receive(pattern)
-  -- do some stuff
-end
-
--- function as just a timer
+print("Starting network checks, change your network and watch the changes come in")
 local lasttime
-local cnt = 8
-function silly()
+local cnt = 60
+local do_check = netcheck.getchecker()
+local changed, new, old
+
+while cnt > 0 do
     cnt=cnt-1
     if lasttime then
         print (cnt .. ": It's been " .. tostring(socket.gettime() - lasttime) .. " since we were here, silly how time flies...")
     end
-    lasttime = socket.gettime()
-    if cnt == 0 then
-        -- exit the loop
-        copas.isexiting = true
+    changed, new, old = do_check()
+    if changed then
+        netchange(new, old)
     end
+    lasttime = socket.gettime()
+    socket.sleep(1)
 end
 
-server = socket.bind(host, port)            -- create a server
-copas.addserver(server, handle)
-
-print("Starting network checks, change your network and watch the changes come in")
-local t = netcheck.addcheck(netchange)   -- create network check
-t:arm(2)                                    -- arm the returned timer
-copas.newtimer(silly, silly, nil, true, nil):arm(5)  -- silly timer
-copas.loop()                          -- enter loop
 print ("bye, bye...")
 
