@@ -4,7 +4,7 @@ rem ===============================================================
 rem   Update the lines below with newest version information
 rem   and files/directories to be included
 rem ===============================================================
-set my_version=0.1.0
+set my_version=0.1.1
 set my_rsrev=1
 set my_name=netcheck
 set my_dir=distr
