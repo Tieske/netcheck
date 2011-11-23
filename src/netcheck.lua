@@ -2,7 +2,7 @@
 -- NetCheck provides function to detect changes in network connectivity.
 -- This module will create no global, it returns the <code>netcheck</code> table with
 -- the defined functions (see below).<br/>
--- <br/>Copas Timer is free software under the MIT/X11 license.
+-- <br/>NetCheck is free software under the MIT/X11 license.
 -- @class module
 -- @name netcheck
 -- @copyright 2011 Thijs Schreijer
