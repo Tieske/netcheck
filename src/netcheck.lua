@@ -1,12 +1,10 @@
 -------------------------------------------------------------------------------
 -- NetCheck provides functions to detect changes in network connectivity.
--- This module will create no global, it returns the <code>netcheck</code> table with
--- the defined functions (see below).<br/>
 -- <br/>NetCheck is free software under the MIT/X11 license.
 -- @class module
 -- @name netcheck
--- @copyright 2011 Thijs Schreijer
--- @release Version 0.1.0, NetCheck to detect network connection changes
+-- @copyright 2011-2013 Thijs Schreijer
+-- @release Version 0.2.0, NetCheck to detect network connection changes
 
 local socket = require("socket")
 local netcheck = {}
@@ -18,24 +16,67 @@ local _dummy -- make local to trick luadoc
 -- documentation), but extended with the following fields;
 -- @class table
 -- @name networkstate
--- @field localhostname (string) name of localhost (only field that can be set, defaults to
--- <code>'localhost'</code>)
--- @field localhostip (string) ip address resolved for <code>localhostname</code>
--- @field connected (string) either <code>'yes'</code>, <code>'no'</code>, or
--- <code>'loopback'</code> (loopback means connected to localhost, no external connection)
--- @field changed (boolean) <code>true</code> if comparison done was different on either;
--- <code>name</code>, <code>connected</code>, or <code>ip[1]</code> properties
+-- @field name hostname
+-- @field ip table with ip adresses
+-- @field arrived (table) containing new ip adresses since last check
+-- @field left (table) containing ip adresses no longer available
+-- @field connected (string) either `yes`, `no`, or `loopback` 
+-- @field changed (boolean) `true` if comparison done was different on either;
+-- `name`, `connected`, `ip[1]`, or there where entries in `arrived`/`left` 
 _dummy = {}
 _dummy = nil
+
+function getip()
+
+  local function tryip()
+    local s = socket.udp()
+    s:setpeername("1.1.1.1",80)
+    local ip, _ = s:getsockname()
+    if ip == "0.0.0.0" then ip = nil end
+    s:close()
+    s = nil
+    collectgarbage()  -- make sure to release every new socket created
+    return ip
+  end
+
+  local myip, result = socket.dns.toip(socket.dns.gethostname())
+  local activeip = tryip()
+  if myip then
+    local lh, aip
+    for i, ip in ipairs(result.ip) do
+      if ip == activeip    then aip = i end
+      if ip == "127.0.0.1" then lh  = i end
+    end
+    if lh then  -- localhost address found, move it to end
+      table.insert(result.ip, result.ip[lh])
+      table.remove(result.ip, lh)
+    else -- localhost not found? add it
+      table.insert(result.ip, "127.0.0.1")
+    end
+    if activeip and not aip then -- active ip not found, add it on top
+      table.insert(result.ip, 1, activeip)
+    end
+    for i, ip in ipairs(result.ip) do
+      if ip == "127.0.1.1" then  -- move it as last
+        table.insert(result.ip, "127.0.1.1")
+        table.remove(result.ip, i)
+        break
+      end
+    end
+    myip = result.ip[1]
+  end
+  return myip, result
+end
 
 -------------------------------------------------------------------------------
 -- Checks the network connection of the system and detects changes in connection or IP adress.
 -- Call repeatedly to check status for changes. With every call include the previous results to compare with.
--- @param oldState (table) previous result (networkstate-table) to compare with, or <code>nil</code> if not called before
--- @return changed (boolean) same as <code>newstate.changed</code>
+-- @param oldState (table) previous result (networkstate-table) to compare with, or `nil` if not called before
+-- @return changed (boolean) same as `newstate.changed`
 -- @return newState (table) networkstate-table
 -- @see networkstate
--- @usage# local netcheck = require("netcheck")
+-- @example
+-- local netcheck = require("netcheck")
 -- function test()
 --     print ("TEST: entering endless check loop, change connection settings and watch the changes come in...")
 --     require ("base")	-- from stdlib to pretty print the table
@@ -49,33 +90,52 @@ _dummy = nil
 -- end
 function netcheck.check(oldState)
 	oldState = oldState or {}
-	oldState.alias = oldState.alias or {}
 	oldState.ip = oldState.ip or {}
 	local sysname = socket.dns.gethostname()
 	local newState = {
 				name = sysname or "no name resolved",
-				localhostname = oldState.localhostname or "localhost",
-				localhostip = socket.dns.toip(oldState.localhostname or "localhost") or "127.0.0.1",
-				alias = {},
 				ip = {},
 			}
 	if not sysname then
 		newState.connected = "no"
 	else
-		local sysip, data = socket.dns.toip(sysname)
+		local sysip, data = getip()
 		if sysip then
 			newState.ip = data.ip
-			newState.alias = data.alias
-			if newState.ip[1] == newState.localhostip then
+			if newState.ip[1] == "127.0.0.1" then
 				newState.connected = "loopback"
 			else
 				newState.connected = "yes"
 			end
+      newstate.arrived = {}
+      for _,newip in pairs(newstate.ip) do
+        for _,oldip in pairs(oldstate.ip) do
+          if newip == oldip then
+            newip = nil
+            break
+          end
+        end
+        if newip then -- was not in old state, so arrived
+          table.insert(newstate.arrived, newip)
+        end
+      end
+      newstate.left = {}
+      for _,oldip in pairs(oldstate.ip) do
+        for _,newip in pairs(newstate.ip) do
+          if newip == oldip then
+            oldip = nil
+            break
+          end
+        end
+        if oldip then -- was not in new state, so left
+          table.insert(newstate.left, oldip)
+        end
+      end
 		else
 			newState.connected = "no"
 		end
 	end
-	newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected)
+	newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected or (#newstate.arrived + #newstate.left)>0 )
 	return newState.changed, newState
 end
 
@@ -88,9 +148,10 @@ end
 -- <li><code>newState</code> (table) current check result (see <code>networkstate</code>)</li>
 -- <li><code>oldState</code> (table) previous check result (see <code>networkstate</code>)</li></ol>
 -- @see networkstate
--- @usage# -- create function
+-- @example
+-- -- create function
 -- local do_check = require("netcheck").getchecker()
--- &nbsp
+-- 
 -- -- watch for changes, short version
 -- while true do
 --     if do_check() then
@@ -103,18 +164,17 @@ end
 --     local changed, newState, oldState = do_check()
 --     if changed then
 --         print ("Network connection changed!")
---         -- here you can compare oldState with newState to find out exactly what changed
 --     end
 -- end
 function netcheck.getchecker()
-	local oldState
-    local f = function()
-			local changed, newState = netcheck.check(oldState)
-            oldState, newState = newState, oldState -- swap value
-            return changed, oldState, newState
-		end
-    f()     -- call first time, which always returns true
-    return f
+  local oldState
+  local f = function()
+    local changed, newState = netcheck.check(oldState)
+    oldState, newState = newState, oldState -- swap value
+    return changed, oldState, newState
+  end
+  f()     -- call first time, which always returns true
+  return f
 end
 
 return netcheck
