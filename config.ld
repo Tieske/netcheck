@@ -1,0 +1,7 @@
+project='NetCheck'
+title='Network connection checker'
+description='Checks network connections and informs when something has changed'
+format='discount'
+file='./src/netcheck.lua'
+dir='doc'
+readme='readme.md'

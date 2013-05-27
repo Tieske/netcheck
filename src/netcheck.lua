@@ -75,6 +75,7 @@ end
 -- @return changed (boolean) same as `newstate.changed`
 -- @return newState (table) networkstate-table
 -- @see networkstate
+-- @name netcheck.check
 -- @example
 -- local netcheck = require("netcheck")
 -- function test()
@@ -88,7 +89,7 @@ end
 --         end
 --     end
 -- end
-function netcheck.check(oldState)
+netcheck.check = function(oldState)
 	oldState = oldState or {}
 	oldState.ip = oldState.ip or {}
 	local sysname = socket.dns.gethostname()
