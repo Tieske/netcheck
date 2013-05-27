@@ -108,35 +108,35 @@ netcheck.check = function(oldState)
 			else
 				newState.connected = "yes"
 			end
-      newstate.arrived = {}
-      for _,newip in pairs(newstate.ip) do
-        for _,oldip in pairs(oldstate.ip) do
+      newState.arrived = {}
+      for _,newip in pairs(newState.ip) do
+        for _,oldip in pairs(oldState.ip) do
           if newip == oldip then
             newip = nil
             break
           end
         end
         if newip then -- was not in old state, so arrived
-          table.insert(newstate.arrived, newip)
+          table.insert(newState.arrived, newip)
         end
       end
-      newstate.left = {}
-      for _,oldip in pairs(oldstate.ip) do
-        for _,newip in pairs(newstate.ip) do
+      newState.left = {}
+      for _,oldip in pairs(oldState.ip) do
+        for _,newip in pairs(newState.ip) do
           if newip == oldip then
             oldip = nil
             break
           end
         end
         if oldip then -- was not in new state, so left
-          table.insert(newstate.left, oldip)
+          table.insert(newState.left, oldip)
         end
       end
 		else
 			newState.connected = "no"
 		end
 	end
-	newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected or (#newstate.arrived + #newstate.left)>0 )
+	newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected or (#newState.arrived + #newState.left)>0 )
 	return newState.changed, newState
 end
 

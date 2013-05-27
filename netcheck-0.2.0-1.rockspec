@@ -1,8 +1,8 @@
 package = "netcheck"
-version = "0.1.0-1"
+version = "0.2.0-1"
 source = {
-   url = "https://github.com/downloads/Tieske/netcheck/netcheck-0.1.0.tar.gz",
-   dir = "netcheck-0.1.0",
+   url = "https://github.com/d.....................",
+   dir = "netcheck-0.2.0",
 }
 description = {
    summary = "A LuaSocket addon that checks changes in the network connection",
