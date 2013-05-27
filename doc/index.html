@@ -27,13 +27,15 @@
 <h1>NetCheck</h1>
 
 
+<h2>Contents</h2>
+<ul>
+<li><a href="#Tables">Tables</a></li>
+</ul>
 
 
 <h2>Modules</h2>
 <ul>
-  <li><a href="modules/--.html">--</a></li>
-  <li><a href="modules/local.html">local</a></li>
-  <li><a href="modules/netcheck.html">netcheck</a></li>
+  <li><strong>netcheck</strong></li>
 </ul>
 <h2>Topics</h2>
 <ul>
@@ -44,32 +46,64 @@
 
 <div id="content">
 
+<h1>Module <code>netcheck</code></h1>
+
+<p>NetCheck provides functions to detect changes in network connectivity.</p>
+<p> <br/>NetCheck is free software under the MIT/X11 license.</p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Release</strong>: Version 0.2.0, NetCheck to detect network connection changes</li>
+        <li><strong>Copyright</strong>: 2011-2013 Thijs Schreijer</li>
+    </ul>
 
 
-  <h2>Checks network connections and informs when something has changed</h2>
-
-<h2>Modules</h2>
-<table class="module_list">
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
 	<tr>
-		<td class="name"  nowrap><a href="modules/--.html">--</a></td>
-		<td class="summary"></td>
-	</tr>
-	<tr>
-		<td class="name"  nowrap><a href="modules/local.html">local</a></td>
-		<td class="summary"></td>
-	</tr>
-	<tr>
-		<td class="name"  nowrap><a href="modules/netcheck.html">netcheck</a></td>
-		<td class="summary">NetCheck provides functions to detect changes in network connectivity.</td>
+	<td class="name" nowrap><a href="#networkstate">networkstate</a></td>
+	<td class="summary">State table with network parameters retrieved and used for comparison to detect changes.</td>
 	</tr>
 </table>
-<h2>Topics</h2>
-<table class="module_list">
-	<tr>
-		<td class="name"  nowrap><a href="topics/readme.md.html">readme.md</a></td>
-		<td class="summary"></td>
-	</tr>
-</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Tables"></a>Tables</h2>
+    <dl class="function">
+    <dt>
+    <a name = "networkstate"></a>
+    <strong>networkstate</strong>
+    </dt>
+    <dd>
+    State table with network parameters retrieved and used for comparison to detect changes.
+ The table contains the same regular info from <code>socket.dns</code> calls (see luasocket
+ documentation), but extended with the following fields;
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+         hostname</li>
+        <li><span class="parameter">ip</span>
+         table with ip adresses</li>
+        <li><span class="parameter">arrived</span>
+         (table) containing new ip adresses since last check</li>
+        <li><span class="parameter">left</span>
+         (table) containing ip adresses no longer available</li>
+        <li><span class="parameter">connected</span>
+         (string) either <code>yes</code>, <code>no</code>, or <code>loopback</code></li>
+        <li><span class="parameter">changed</span>
+         (boolean) <code>true</code> if comparison done was different on either;
+ <code>name</code>, <code>connected</code>, <code>ip[1]</code>, or there where entries in <code>arrived</code>/<code>left</code></li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
 
 </div> <!-- id="content" -->
 </div> <!-- id="main" -->
