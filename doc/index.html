@@ -29,6 +29,7 @@
 
 <h2>Contents</h2>
 <ul>
+<li><a href="#Functions">Functions</a></li>
 <li><a href="#Tables">Tables</a></li>
 </ul>
 
@@ -49,7 +50,12 @@
 <h1>Module <code>netcheck</code></h1>
 
 <p>NetCheck provides functions to detect changes in network connectivity.</p>
-<p> <br/>NetCheck is free software under the MIT/X11 license.</p>
+<p> LIMITATIONS: on unix the current LuaSocket (2.0.x) does not provide means
+ to get the list of addresses in use. Hence an approximation is used by
+ creating a socket and checking what it bound to. But this limits the
+ result to a single ip address.</p>
+
+<p> NetCheck is free software under the <a href="http://opensource.org/licenses/MIT">MIT/X11 license</a>.</p>
     <h3>Info:</h3>
     <ul>
         <li><strong>Release</strong>: Version 0.2.0, NetCheck to detect network connection changes</li>
@@ -57,6 +63,17 @@
     </ul>
 
 
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#check">check&nbsp;(oldState)</a></td>
+	<td class="summary">Checks the network connection of the system and detects changes in connection or IP adress.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#getchecker">getchecker&nbsp;()</a></td>
+	<td class="summary">Wraps the check function in a single function.</td>
+	</tr>
+</table>
 <h2><a href="#Tables">Tables</a></h2>
 <table class="function_list">
 	<tr>
@@ -69,6 +86,102 @@
 <br/>
 
 
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "check"></a>
+    <strong>check&nbsp;(oldState)</strong>
+    </dt>
+    <dd>
+    Checks the network connection of the system and detects changes in connection or IP adress.
+ Call repeatedly to check status for changes. With every call include the previous results to compare with.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">oldState</span>
+         (table) previous result (networkstate-table) to compare with, or <code>nil</code> if not called before</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+        changed (boolean) same as <code>newstate.changed</code></li>
+        <li>
+        newState (table) networkstate-table</li>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#networkstate">networkstate</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"> <span class="keyword">local</span> netcheck = <span class="global">require</span>(<span class="string">"netcheck"</span>)
+ <span class="keyword">function</span> test()
+     <span class="global">print</span> (<span class="string">"TEST: entering endless check loop, change connection settings and watch the changes come in..."</span>)
+     <span class="global">require</span> (<span class="string">"base"</span>)	<span class="comment">-- from stdlib to pretty print the table
+</span>     <span class="keyword">local</span> change, data
+     <span class="keyword">while</span> <span class="keyword">true</span> <span class="keyword">do</span>
+         change, data = netcheck.check(data)
+         <span class="keyword">if</span> change <span class="keyword">then</span>
+             <span class="global">print</span> (prettytostring(data))
+         <span class="keyword">end</span>
+     <span class="keyword">end</span>
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "getchecker"></a>
+    <strong>getchecker&nbsp;()</strong>
+    </dt>
+    <dd>
+    Wraps the check function in a single function.  By wrapping it and creating an upvalue
+ for the <code>oldState</code> parameter, the result can be called directly for changes.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+         function that can be used to detect changes. This function takes no parameters
+ and returns three values when called;<ol>
+ <li><code>changed</code> (boolean) indicating whether there was a change (same as <code>newState.changed</code>)</li>
+ <li><code>newState</code> (table) current check result (see <code>networkstate</code>)</li>
+ <li><code>oldState</code> (table) previous check result (see <code>networkstate</code>)</li></ol>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#networkstate">networkstate</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"> <span class="comment">-- create function
+</span> <span class="keyword">local</span> do_check = <span class="global">require</span>(<span class="string">"netcheck"</span>).getchecker()
+
+ <span class="comment">-- watch for changes, short version
+</span> <span class="keyword">while</span> <span class="keyword">true</span> <span class="keyword">do</span>
+     <span class="keyword">if</span> do_check() <span class="keyword">then</span>
+         <span class="global">print</span> (<span class="string">"Network connection changed!"</span>)
+     <span class="keyword">end</span>
+ <span class="keyword">end</span>
+
+ <span class="comment">-- alternative, to find out what changed...
+</span> <span class="keyword">while</span> <span class="keyword">true</span> <span class="keyword">do</span>
+     <span class="keyword">local</span> changed, newState, oldState = do_check()
+     <span class="keyword">if</span> changed <span class="keyword">then</span>
+         <span class="global">print</span> (<span class="string">"Network connection changed!"</span>)
+         <span class="comment">-- examine newState here to see what changed
+</span>     <span class="keyword">end</span>
+ <span class="keyword">end</span></pre>
+    </ul>
+
+</dd>
+</dl>
     <h2><a name="Tables"></a>Tables</h2>
     <dl class="function">
     <dt>
@@ -77,15 +190,13 @@
     </dt>
     <dd>
     State table with network parameters retrieved and used for comparison to detect changes.
- The table contains the same regular info from <code>socket.dns</code> calls (see luasocket
- documentation), but extended with the following fields;
 
     <h3>Fields:</h3>
     <ul>
         <li><span class="parameter">name</span>
          hostname</li>
         <li><span class="parameter">ip</span>
-         table with ip adresses</li>
+         (table) ip adresses</li>
         <li><span class="parameter">arrived</span>
          (table) containing new ip adresses since last check</li>
         <li><span class="parameter">left</span>

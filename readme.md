@@ -1,6 +1,6 @@
 License
 =======
-NetCheck is free software under the MIT/X11 license.
+NetCheck is free software under the [MIT/X11 license](http://opensource.org/licenses/MIT).
 Copyright 2011-2013 Thijs Schreijer
 
 See included documentation for usage, source is available at

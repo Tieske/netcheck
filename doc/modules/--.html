@@ -55,7 +55,43 @@
 
 <p></p>
 <p> By wrapping it and creating an upvalue
- for the <code>oldState</code> parameter, the result can be called directly for changes.</p>
+ for the <code>oldState</code> parameter, the result can be called directly for changes. create function
+ local do_check = require("netcheck").getchecker()</p>
+
+<p> -- watch for changes, short version
+ while true do</p>
+<pre><code> if do_check() then
+     print ("Network connection changed!")
+ end
+</code></pre>
+<p> end
+ &amp;nbsp
+ -- alternative, to find out what changed...
+ while true do</p>
+<pre><code> local changed, newState, oldState = do_check()
+ if changed then
+     print ("Network connection changed!")
+ end
+</code></pre>
+<p> end create function
+ local do_check = require("netcheck").getchecker()</p>
+
+<p> -- watch for changes, short version
+ while true do</p>
+<pre><code> if do_check() then
+     print ("Network connection changed!")
+ end
+</code></pre>
+<p> end
+ &amp;nbsp
+ -- alternative, to find out what changed...
+ while true do</p>
+<pre><code> local changed, newState, oldState = do_check()
+ if changed then
+     print ("Network connection changed!")
+ end
+</code></pre>
+<p> end</p>
 
 
 <h2><a href="#Functions">Functions</a></h2>
@@ -78,16 +114,16 @@
     </dt>
     <dd>
     Wraps the check function in a single function.
+ and returns three values when called;<ol>
+ <li><code>changed</code> (boolean) indicating whether there was a change (same as <code>newState.changed</code>)</li>
+ <li><code>newState</code> (table) current check result (see <code>networkstate</code>)</li>
+ <li><code>oldState</code> (table) previous check result (see <code>networkstate</code>)</li></ol>
 
 
     <h3>Returns:</h3>
     <ol>
 
          function that can be used to detect changes. This function takes no parameters
- and returns three values when called;<ol>
- <li><code>changed</code> (boolean) indicating whether there was a change (same as <code>newState.changed</code>)</li>
- <li><code>newState</code> (table) current check result (see <code>networkstate</code>)</li>
- <li><code>oldState</code> (table) previous check result (see <code>networkstate</code>)</li></ol>
     </ol>
 
 

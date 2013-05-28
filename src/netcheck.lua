@@ -1,20 +1,26 @@
 -------------------------------------------------------------------------------
 -- NetCheck provides functions to detect changes in network connectivity.
--- <br/>NetCheck is free software under the MIT/X11 license.
+--
+-- LIMITATIONS: on unix the current LuaSocket (2.0.x) does not provide means
+-- to get the list of addresses in use. Hence an approximation is used by
+-- creating a socket and checking what it bound to. But this limits the
+-- result to a single ip address.
+-- 
+-- NetCheck is free software under the [MIT/X11 license](http://opensource.org/licenses/MIT).
 -- @class module
 -- @name netcheck
 -- @copyright 2011-2013 Thijs Schreijer
 -- @release Version 0.2.0, NetCheck to detect network connection changes
 
 local socket = require("socket")
-local netcheck = {}
+local M = {}
 
 -------------------------------------------------------------------------------
 -- State table with network parameters retrieved and used for comparison to detect changes.
 -- @class table
 -- @name networkstate
 -- @field name hostname
--- @field ip table with ip adresses
+-- @field ip (table) ip adresses
 -- @field arrived (table) containing new ip adresses since last check
 -- @field left (table) containing ip adresses no longer available
 -- @field connected (string) either `yes`, `no`, or `loopback` 
@@ -65,115 +71,113 @@ function getip()
   return myip, result
 end
 
-netcheck = {
-  -------------------------------------------------------------------------------
-  -- Checks the network connection of the system and detects changes in connection or IP adress.
-  -- Call repeatedly to check status for changes. With every call include the previous results to compare with.
-  -- @param oldState (table) previous result (networkstate-table) to compare with, or `nil` if not called before
-  -- @return changed (boolean) same as `newstate.changed`
-  -- @return newState (table) networkstate-table
-  -- @see networkstate
-  -- @example
-  -- local netcheck = require("netcheck")
-  -- function test()
-  --     print ("TEST: entering endless check loop, change connection settings and watch the changes come in...")
-  --     require ("base")	-- from stdlib to pretty print the table
-  --     local change, data
-  --     while true do
-  --         change, data = netcheck.check(data)
-  --         if change then
-  --             print (prettytostring(data))
-  --         end
-  --     end
-  -- end
-  check = function(oldState)
-    oldState = oldState or {}
-    oldState.ip = oldState.ip or {}
-    local sysname = socket.dns.gethostname()
-    local newState = {
-          name = sysname or "no name resolved",
-          ip = {},
-        }
-    if not sysname then
-      newState.connected = "no"
-    else
-      local sysip, data = getip()
-      if sysip then
-        newState.ip = data.ip
-        if newState.ip[1] == "127.0.0.1" then
-          newState.connected = "loopback"
-        else
-          newState.connected = "yes"
-        end
-        newState.arrived = {}
-        for _,newip in pairs(newState.ip) do
-          for _,oldip in pairs(oldState.ip) do
-            if newip == oldip then
-              newip = nil
-              break
-            end
-          end
-          if newip then -- was not in old state, so arrived
-            table.insert(newState.arrived, newip)
-          end
-        end
-        newState.left = {}
-        for _,oldip in pairs(oldState.ip) do
-          for _,newip in pairs(newState.ip) do
-            if newip == oldip then
-              oldip = nil
-              break
-            end
-          end
-          if oldip then -- was not in new state, so left
-            table.insert(newState.left, oldip)
-          end
-        end
+-------------------------------------------------------------------------------
+-- Checks the network connection of the system and detects changes in connection or IP adress.
+-- Call repeatedly to check status for changes. With every call include the previous results to compare with.
+-- @param oldState (table) previous result (networkstate-table) to compare with, or `nil` if not called before
+-- @return changed (boolean) same as `newstate.changed`
+-- @return newState (table) networkstate-table
+-- @see networkstate
+-- @usage local netcheck = require("netcheck")
+-- function test()
+--     print ("TEST: entering endless check loop, change connection settings and watch the changes come in...")
+--     require ("base")	-- from stdlib to pretty print the table
+--     local change, data
+--     while true do
+--         change, data = netcheck.check(data)
+--         if change then
+--             print (prettytostring(data))
+--         end
+--     end
+-- end
+M.check = function(oldState)
+  oldState = oldState or {}
+  oldState.ip = oldState.ip or {}
+  local sysname = socket.dns.gethostname()
+  local newState = {
+        name = sysname or "no name resolved",
+        ip = {},
+      }
+  if not sysname then
+    newState.connected = "no"
+  else
+    local sysip, data = getip()
+    if sysip then
+      newState.ip = data.ip
+      if newState.ip[1] == "127.0.0.1" then
+        newState.connected = "loopback"
       else
-        newState.connected = "no"
+        newState.connected = "yes"
       end
+      newState.arrived = {}
+      for _,newip in pairs(newState.ip) do
+        for _,oldip in pairs(oldState.ip) do
+          if newip == oldip then
+            newip = nil
+            break
+          end
+        end
+        if newip then -- was not in old state, so arrived
+          table.insert(newState.arrived, newip)
+        end
+      end
+      newState.left = {}
+      for _,oldip in pairs(oldState.ip) do
+        for _,newip in pairs(newState.ip) do
+          if newip == oldip then
+            oldip = nil
+            break
+          end
+        end
+        if oldip then -- was not in new state, so left
+          table.insert(newState.left, oldip)
+        end
+      end
+    else
+      newState.connected = "no"
     end
-    newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected or (#newState.arrived + #newState.left)>0 )
-    return newState.changed, newState
-  end,
-
-  -------------------------------------------------------------------------------
-  -- Wraps the check function in a single function. By wrapping it and creating an upvalue
-  -- for the <code>oldState</code> parameter, the result can be called directly for changes.
-  -- @return function that can be used to detect changes. This function takes no parameters
-  -- and returns three values when called;<ol>
-  -- <li><code>changed</code> (boolean) indicating whether there was a change (same as <code>newState.changed</code>)</li>
-  -- <li><code>newState</code> (table) current check result (see <code>networkstate</code>)</li>
-  -- <li><code>oldState</code> (table) previous check result (see <code>networkstate</code>)</li></ol>
-  -- @see networkstate
-  -- @example
-  -- -- create function
-  -- local do_check = require("netcheck").getchecker()
-  -- 
-  -- -- watch for changes, short version
-  -- while true do
-  --     if do_check() then
-  --         print ("Network connection changed!")
-  --     end
-  -- end
-  -- &nbsp
-  -- -- alternative, to find out what changed...
-  -- while true do
-  --     local changed, newState, oldState = do_check()
-  --     if changed then
-  --         print ("Network connection changed!")
-  --     end
-  -- end
-  getchecker = function()
-    local oldState
-    local f = function()
-      local changed, newState = netcheck.check(oldState)
-      oldState, newState = newState, oldState -- swap value
-      return changed, oldState, newState
-    end
-    f()     -- call first time, which always returns true
-    return f
   end
-}
+  newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected or (#newState.arrived + #newState.left)>0 )
+  return newState.changed, newState
+end,
 
-return netcheck
+-------------------------------------------------------------------------------
+-- Wraps the check function in a single function. By wrapping it and creating an upvalue
+-- for the <code>oldState</code> parameter, the result can be called directly for changes.
+-- @return function that can be used to detect changes. This function takes no parameters
+-- and returns three values when called;<ol>
+-- <li><code>changed</code> (boolean) indicating whether there was a change (same as <code>newState.changed</code>)</li>
+-- <li><code>newState</code> (table) current check result (see <code>networkstate</code>)</li>
+-- <li><code>oldState</code> (table) previous check result (see <code>networkstate</code>)</li></ol>
+-- @see networkstate
+-- @usage -- create function
+-- local do_check = require("netcheck").getchecker()
+-- 
+-- -- watch for changes, short version
+-- while true do
+--     if do_check() then
+--         print ("Network connection changed!")
+--     end
+-- end
+-- 
+-- -- alternative, to find out what changed...
+-- while true do
+--     local changed, newState, oldState = do_check()
+--     if changed then
+--         print ("Network connection changed!")
+--         -- examine newState here to see what changed
+--     end
+-- end
+M.getchecker = function()
+  local oldState
+  local f = function()
+    local changed, newState = M.check(oldState)
+    oldState, newState = newState, oldState -- swap value
+    return changed, oldState, newState
+  end
+  f()     -- call first time, which always returns true
+  return f
+end
+
+
+return M

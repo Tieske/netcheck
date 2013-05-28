@@ -30,6 +30,10 @@
   <li><a href="../index.html">Index</a></li>
 </ul>
 
+<h2>Contents</h2>
+<ul>
+<li><a href="#Tables">Tables</a></li>
+</ul>
 
 
 <h2>Modules</h2>
@@ -50,7 +54,7 @@
 <h1>Module <code>netcheck</code></h1>
 
 <p>NetCheck provides functions to detect changes in network connectivity.</p>
-<p> <br/>NetCheck is free software under the MIT/X11 license.</p>
+<p> NetCheck is free software under the <a href="http://opensource.org/licenses/MIT">MIT/X11 license</a>.</p>
     <h3>Info:</h3>
     <ul>
         <li><strong>Release</strong>: Version 0.2.0, NetCheck to detect network connection changes</li>
@@ -58,11 +62,50 @@
     </ul>
 
 
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#networkstate">networkstate</a></td>
+	<td class="summary">State table with network parameters retrieved and used for comparison to detect changes.</td>
+	</tr>
+</table>
 
 <br/>
 <br/>
 
 
+    <h2><a name="Tables"></a>Tables</h2>
+    <dl class="function">
+    <dt>
+    <a name = "networkstate"></a>
+    <strong>networkstate</strong>
+    </dt>
+    <dd>
+    State table with network parameters retrieved and used for comparison to detect changes.
+ <code>name</code>, <code>connected</code>, <code>ip[1]</code>, or there where entries in <code>arrived</code>/<code>left</code>
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+         hostname</li>
+        <li><span class="parameter">ip</span>
+         (table) ip adresses</li>
+        <li><span class="parameter">arrived</span>
+         (table) containing new ip adresses since last check</li>
+        <li><span class="parameter">left</span>
+         (table) containing ip adresses no longer available</li>
+        <li><span class="parameter">connected</span>
+         (string) either <code>yes</code>, <code>no</code>, or <code>loopback</code></li>
+        <li><span class="parameter">changed</span>
+         (boolean) <code>true</code> if comparison done was different on either;</li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
 
 
 </div> <!-- id="content" -->

@@ -54,7 +54,31 @@
 <h1>Module <code>local</code></h1>
 
 <p></p>
-<p> Call repeatedly to check status for changes. With every call include the previous results to compare with.</p>
+<p> Call repeatedly to check status for changes. With every call include the previous results to compare with. netcheck = require("netcheck")
+ function test()</p>
+<pre><code> print ("TEST: entering endless check loop, change connection settings and watch the changes come in...")
+ require ("base")   -- from stdlib to pretty print the table
+ local change, data
+ while true do
+     change, data = netcheck.check(data)
+     if change then
+         print (prettytostring(data))
+     end
+ end
+</code></pre>
+<p> end netcheck = require("netcheck")
+ function test()</p>
+<pre><code> print ("TEST: entering endless check loop, change connection settings and watch the changes come in...")
+ require ("base")   -- from stdlib to pretty print the table
+ local change, data
+ while true do
+     change, data = netcheck.check(data)
+     if change then
+         print (prettytostring(data))
+     end
+ end
+</code></pre>
+<p> end</p>
 
 
 <h2><a href="#Functions">Functions</a></h2>
