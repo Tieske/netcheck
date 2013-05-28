@@ -139,7 +139,7 @@ M.check = function(oldState)
   end
   newState.changed = (oldState.name ~= newState.name or oldState.ip[1] ~= newState.ip[1] or newState.connected ~= oldState.connected or (#newState.arrived + #newState.left)>0 )
   return newState.changed, newState
-end,
+end
 
 -------------------------------------------------------------------------------
 -- Wraps the check function in a single function. By wrapping it and creating an upvalue
